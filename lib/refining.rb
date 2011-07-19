@@ -12,7 +12,7 @@
 
 class Object
   def refine_method (meth, &block)
-    return unless block_given?
+    return unless block
 
     old = self.method(meth) rescue Proc.new {}
 
@@ -24,7 +24,7 @@ end
 
 class Class
   def refine_method (meth, &block)
-    return unless block_given?
+    return unless block
 
     old = self.instance_method(meth) rescue Proc.new {}
 
@@ -33,13 +33,13 @@ class Class
     }
   end
 
-  def refine_class_method (meth)
-    return unless block_given?
+  def refine_class_method (meth, &block)
+    return unless block
 
     old = self.method(meth) rescue Proc.new {}
 
     define_singleton_method(meth) {|*args|
-      yield old, *args
+      self.instance_exec((old.is_a?(Proc) ? old : old.bind(self)), *args, &block)
     }
   end
 end
