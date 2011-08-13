@@ -10,18 +10,6 @@
 #  0. You just DO WHAT THE FUCK YOU WANT TO.
 #++
 
-class Object
-  def refine_method (meth, &block)
-    return unless block
-
-    old = self.method(meth) rescue Proc.new {}
-
-    define_singleton_method(meth) {|*args|
-      self.instance_exec(old, *args, &block)
-    }
-  end
-end
-
 class Class
   def refine_method (meth, &block)
     return unless block
@@ -34,12 +22,16 @@ class Class
   end
 
   def refine_class_method (meth, &block)
-    return unless block
+    class << self
+      self
+    end.refine_method meth, &block
+  end
+end
 
-    old = self.method(meth) rescue Proc.new {}
-
-    define_singleton_method(meth) {|*args|
-      self.instance_exec((old.is_a?(Proc) ? old : old.bind(self)), *args, &block)
-    }
+class Object
+  def refine_method (meth, &block)
+    class << self
+      self
+    end.refine_method meth, &block
   end
 end
