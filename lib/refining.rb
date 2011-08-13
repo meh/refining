@@ -14,10 +14,10 @@ class Module
   def refine_method (meth, &block)
     return unless block
 
-    old = self.instance_method(meth) rescue Proc.new {}
+    old = instance_method(meth) rescue proc {}
 
     define_method(meth) {|*args|
-      self.instance_exec((old.is_a?(Proc) ? old : old.bind(self)), *args, &block)
+      instance_exec((old.is_a?(UnboundMethod) ? old.bind(self) : old), *args, &block)
     }
   end
 
@@ -29,7 +29,7 @@ class Module
 end
 
 class Object
-  def refine_method (meth, &block)
+  def refine_instance_method (meth, &block)
     class << self
       self
     end.refine_method meth, &block
