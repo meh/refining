@@ -10,6 +10,14 @@
 #  0. You just DO WHAT THE FUCK YOU WANT TO.
 #++
 
+class Object
+  def refine_singleton_method (meth, &block)
+    class << self
+      self
+    end.refine_method meth, &block
+  end
+end
+
 class Module
   def refine_method (meth, &block)
     return unless block
@@ -21,17 +29,9 @@ class Module
     }
   end
 
-  def refine_class_method (meth, &block)
-    class << self
-      self
-    end.refine_method meth, &block
-  end; alias refine_module_method refine_class_method
+  alias refine_module_method refine_singleton_method
 end
 
-class Object
-  def refine_instance_method (meth, &block)
-    class << self
-      self
-    end.refine_method meth, &block
-  end
+class Class
+  alias refine_class_method refine_singleton_method
 end

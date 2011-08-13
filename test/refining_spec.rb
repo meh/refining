@@ -23,7 +23,7 @@ describe 'Refining' do
     a = LOL.new
     b = LOL.new
 
-    a.refine_method :lol do |old|
+    a.refine_singleton_method :lol do |old|
       old.call.reverse
     end
 
