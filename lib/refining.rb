@@ -10,7 +10,7 @@
 #  0. You just DO WHAT THE FUCK YOU WANT TO.
 #++
 
-class Class
+class Module
   def refine_method (meth, &block)
     return unless block
 
@@ -25,7 +25,7 @@ class Class
     class << self
       self
     end.refine_method meth, &block
-  end
+  end; alias refine_module_method refine_class_method
 end
 
 class Object
