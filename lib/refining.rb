@@ -22,11 +22,13 @@ class Module
   def refine_method (meth, &block)
     return unless block
 
-    old = instance_method(meth) rescue proc {}
+    old = instance_method(meth) rescue nil
 
     define_method(meth) {|*args|
-      instance_exec((old.is_a?(UnboundMethod) ? old.bind(self) : old), *args, &block)
+      instance_exec((old.is_a?(UnboundMethod) ? old.bind(self) : old) || proc {}, *args, &block)
     }
+
+    old
   end
 
   alias refine_module_method refine_singleton_method
