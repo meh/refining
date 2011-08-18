@@ -9,8 +9,16 @@ describe 'Refining' do
         23
       end
 
+      def omg (&block)
+        !!block
+      end
+
       refine_method :lol do |old|
         [old.call, 42]
+      end
+
+      refine_method :omg do |old, &block|
+        old.call(&block)
       end
     end
   end
@@ -29,5 +37,9 @@ describe 'Refining' do
 
     a.lol.should == [42, 23]
     b.lol.should == [23, 42]
+  end
+
+  it 'passes blocks correctly' do
+    LOL.new.omg {}.should == true
   end
 end
