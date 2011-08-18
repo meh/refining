@@ -24,7 +24,7 @@ class Object
       end
 
       what.send :define_method, meth do |*args, &blk|
-        return if @__refining_defined__ && [:method_added, :singleton_method_added].member?(meth)
+        return if instance_variable_defined?(:@__refining_defined__) && [:method_added, :singleton_method_added].member?(meth)
         
         @__refining_defined__ = true
         what.send(:define_method, 'temporary method for refining', &block)
@@ -32,7 +32,7 @@ class Object
         target.send('temporary method for refining', old.is_a?(UnboundMethod) ? old.bind(self) : old, *args, &blk).tap {
           what.send(:undef_method, 'temporary method for refining') rescue nil
 
-          @__refining_defined__ = false
+          remove_instance_variable(:@__refining_defined__) rescue nil
         }
       end
     }
@@ -47,7 +47,7 @@ class Module
       old ||= proc {}
 
       define_method(meth) {|*args, &blk|
-        return if @__refining_defined__ && [:method_added, :singleton_method_added].member?(meth)
+        return if instance_variable_defined?(:@__refining_defined__) && [:method_added, :singleton_method_added].member?(meth)
 
         what = class << self
           self
@@ -59,7 +59,7 @@ class Module
         send('temporary method for refining', old.is_a?(UnboundMethod) ? old.bind(self) : old, *args, &blk).tap {
           what.send(:undef_method, 'temporary method for refining') rescue nil
 
-          @__refining_defined__ = false
+          remove_instance_variable(:@__refining_defined__) rescue nil
         }
       }
     }
