@@ -23,14 +23,14 @@ class Object
         self
       end
 
-      what.send :define_method, meth do |*args, &blk|
+      what.__send__ :define_method, meth do |*args, &blk|
         return if instance_variable_defined?(:@__refining_defined__) && [:method_added, :singleton_method_added].member?(meth)
         
         @__refining_defined__ = true
-        what.send(:define_method, 'temporary method for refining', &block)
+        what.__send__(:define_method, 'temporary method for refining', &block)
         
-        target.send('temporary method for refining', old.is_a?(UnboundMethod) ? old.bind(self) : old, *args, &blk).tap {
-          what.send(:undef_method, 'temporary method for refining') rescue nil
+        target.__send__('temporary method for refining', old.is_a?(UnboundMethod) ? old.bind(self) : old, *args, &blk).tap {
+          what.__send__(:undef_method, 'temporary method for refining') rescue nil
 
           remove_instance_variable(:@__refining_defined__) rescue nil
         }
@@ -54,10 +54,10 @@ class Module
         end
 
         @__refining_defined__ = true
-        what.send(:define_method, 'temporary method for refining', &block)
+        what.__send__(:define_method, 'temporary method for refining', &block)
         
-        send('temporary method for refining', old.is_a?(UnboundMethod) ? old.bind(self) : old, *args, &blk).tap {
-          what.send(:undef_method, 'temporary method for refining') rescue nil
+        __send__('temporary method for refining', old.is_a?(UnboundMethod) ? old.bind(self) : old, *args, &blk).tap {
+          what.__send__(:undef_method, 'temporary method for refining') rescue nil
 
           remove_instance_variable(:@__refining_defined__) rescue nil
         }
