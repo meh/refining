@@ -20,7 +20,7 @@ class LOL
 		old.call
 	end
 
-	refine_method :wat, prefix: 'bench' do
+	refine_method :wat, :prefix => 'bench' do
 		__send__ 'bench_wat'
 	end
 end
