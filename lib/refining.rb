@@ -11,58 +11,69 @@
 #++
 
 class Object
-	def refine_singleton_method (meth, &block)
+	def refine_singleton_method (meth, options = {}, &block)
 		return unless block
 
-		target = self
+		what = class << self
+			self
+		end
 
-		(method(meth) rescue nil).tap {|old|
-			old ||= proc {}
+		if options[:alias] || options[:prefix]
+			what.instance_eval {
+				alias_method options[:alias] || "#{options[:prefix]}_#{meth}", meth
+				define_method meth, &block
+			}
+		else
+			target = self
 
-			what = class << target
-				self
-			end
+			(method(meth) rescue nil).tap {|old|
+				old ||= proc {}
 
-			what.__send__ :define_method, meth do |*args, &blk|
-				return if instance_variable_defined?(:@__refining_defined__) && [:method_added, :singleton_method_added].member?(meth)
+				what.instance_eval {
+					define_method meth do |*args, &blk|
+						what.instance_eval {
+							define_method 'temporary method for refining', &block
 
-				@__refining_defined__ = true
-				what.__send__(:define_method, 'temporary method for refining', &block)
-
-				target.__send__('temporary method for refining', old.is_a?(UnboundMethod) ? old.bind(self) : old, *args, &blk).tap {
-					what.__send__(:undef_method, 'temporary method for refining') rescue nil
-
-					remove_instance_variable(:@__refining_defined__) rescue nil
+							target.__send__('temporary method for refining', old, *args, &blk).tap {
+								undef_method('temporary method for refining') rescue nil
+							}
+						}
+					end
 				}
-			end
-		}
+			}
+		end
 	end
 end
 
 class Module
-	def refine_method (meth, &block)
+	def refine_method (meth, options = {}, &block)
 		return unless block
 
-		(instance_method(meth) rescue nil).tap {|old|
-			old ||= proc {}
-
-			define_method(meth) {|*args, &blk|
-				return if instance_variable_defined?(:@__refining_defined__) && [:method_added, :singleton_method_added].member?(meth)
-
-				what = class << self
-					self
-				end
-
-				@__refining_defined__ = true
-				what.__send__(:define_method, 'temporary method for refining', &block)
-
-				__send__('temporary method for refining', old.is_a?(UnboundMethod) ? old.bind(self) : old, *args, &blk).tap {
-					what.__send__(:undef_method, 'temporary method for refining') rescue nil
-
-					remove_instance_variable(:@__refining_defined__) rescue nil
-				}
+		if options[:alias] || options[:prefix]
+			instance_eval {
+				alias_method options[:alias] || "#{options[:prefix]}_#{meth}", meth
+				define_method meth, &block
 			}
-		}
+		else
+			(instance_method(meth) rescue nil).tap {|old|
+				old ||= proc {}
+
+				define_method meth do |*args, &blk|
+					target = self
+					what   = class << target
+						self
+					end
+
+					what.instance_eval {
+						define_method 'temporary method for refining', &block
+
+						target.__send__('temporary method for refining', old.is_a?(UnboundMethod) ? old.bind(target) : old, *args, &blk).tap {
+							undef_method 'temporary method for refining' rescue nil
+						}
+					}
+				end
+			}
+		end
 	end
 
 	alias refine_module_method refine_singleton_method
