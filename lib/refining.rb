@@ -20,7 +20,12 @@ class Object
 
 		if options[:alias] || options[:prefix]
 			what.instance_eval {
-				alias_method options[:alias] || "#{options[:prefix]}_#{meth}", meth
+				begin
+					alias_method options[:alias] || "#{options[:prefix]}_#{meth}", meth
+				rescue NameError
+					define_method options[:alias] || "#{options[:prefix]}_#{meth}" do |*args| end
+				end
+
 				define_method meth, &block
 			}
 		else
@@ -51,7 +56,12 @@ class Module
 
 		if options[:alias] || options[:prefix]
 			instance_eval {
-				alias_method options[:alias] || "#{options[:prefix]}_#{meth}", meth
+				begin
+					alias_method options[:alias] || "#{options[:prefix]}_#{meth}", meth
+				rescue NameError
+					define_method options[:alias] || "#{options[:prefix]}_#{meth}" do |*args| end
+				end
+
 				define_method meth, &block
 			}
 		else
